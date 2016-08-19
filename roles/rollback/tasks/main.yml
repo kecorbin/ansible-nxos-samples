@@ -1,0 +1,25 @@
+# this will rollback a configuration to a checkpoint passed to variable
+# likely that this is given at runtime e.g:
+#
+# ansible-playbook -e checkpoint=foo ....
+
+- name: Rollback configuration to a checkpoint
+  nxos_command:
+    host: "{{ inventory_hostname }}"
+    use_ssl: true
+    transport: cli
+    validate_certs: false
+    commands:
+      - rollback running-config checkpoint {{ checkpoint }}
+    waitfor:
+      - "result[0] contains successfully"
+
+- name: Save Running Configuraton
+  nxos_command:
+    host: "{{ inventory_hostname }}"
+    use_ssl: true
+    transport: cli
+    validate_certs: false
+    commands:
+      - copy running-config startup-config
+

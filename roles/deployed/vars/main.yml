@@ -1,0 +1,8 @@
+vlans:
+  - { vlan_id: 10, name: test_segment10 }
+  - { vlan_id: 99, name: test_segment99 }
+
+route_reflectors:
+  - { ip: 12.12.12.12, as: 50 }
+  - { ip: 13.13.13.13, as: 50 }
+

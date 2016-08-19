@@ -1,0 +1,10 @@
+---
+- hosts: switches
+  connection: local
+  vars_prompt:
+    - name: "checkpoint"
+      prompt: "Enter the change record you wish to backout: "
+      private: no
+  roles:
+    - role: rollback
+

@@ -1,0 +1,4 @@
+
+svis:
+  - { name:  vlan10, vrf: test10, ip: 10.10.10.1, mask: 24 }
+  - { name:  vlan99, vrf: test99, ip: 99.99.99.1, mask: 24 }

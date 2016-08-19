@@ -1,0 +1,10 @@
+---
+- hosts: switches
+  connection: local
+  vars_prompt:
+    - name: "CR"
+      prompt: "Enter change control number: "
+      private: no
+  roles:
+    - role: deployed
+

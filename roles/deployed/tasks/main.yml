@@ -1,0 +1,107 @@
+- name: Checkpoint configuration
+  nxos_command:
+    host: "{{ inventory_hostname }}"
+    use_ssl: true
+    transport: cli
+    validate_certs: false
+    commands:
+      - checkpoint {{ CR }}
+    waitfor:
+      - "result[0] contains Done"
+
+- name: Enable Features
+  nxos_feature:
+    transport=nxapi
+    use_ssl=true
+    validate_certs=false
+    feature={{ item }}
+    state=enabled
+    host={{ inventory_hostname }}
+  with_items:
+    - interface-vlan
+    - bgp
+
+- name: Create VLANS
+  with_items: "{{ vlans }}"
+  nxos_vlan:
+    vlan_id='{{ item.vlan_id }}'
+    name='{{ item.name }}'
+    state=present
+    host='{{ inventory_hostname }}'
+    transport=nxapi
+
+- name: Create VRF's
+  with_items: "{{ svis }}"
+  nxos_vrf:
+    vrf={{ item.vrf }}
+    transport=nxapi
+    host={{ inventory_hostname }}
+
+- name: Create SVI's
+  with_items: "{{ svis }}"
+  nxos_interface:
+    interface={{ item.name }}
+    host={{ inventory_hostname }}
+    transport=nxapi
+
+- name: Assign interfaces to VRF's
+  with_items: "{{ svis }}"
+  nxos_vrf_interface:
+    transport=nxapi vrf={{ item.vrf }}
+    interface={{ item.name }}
+    host={{ inventory_hostname }}
+    state=present
+
+- name: Assign IP addresses to interfaces
+  with_items: "{{ svis }}"
+  nxos_ip_interface: transport=nxapi interface={{ item.name }} addr={{ item.ip }} mask={{ item.mask }} host={{ inventory_hostname }}
+
+- name: BGP Neighbors (nxos_config)
+  with_items: "{{ route_reflectors }}"
+  nxos_config:
+    host: "{{ inventory_hostname }}"
+    transport: nxapi
+    lines:
+      - "neighbor {{ item.ip }} remote-as {{ item.as }}"
+      - "address-family ipv4 unicast"
+    parents:
+      - "router bgp 10"
+
+- name: Activate BGP address families
+  with_items: "{{ svis }}"
+  nxos_config:
+    host: "{{ inventory_hostname }}"
+    transport: nxapi
+    lines:
+      - "vrf {{ item.vrf }}"
+    parents:
+      - "router bgp 10"
+
+- name: BGP Neighbors (Custom nxos_bgp module)
+  nxos_bgp:
+    host: "{{ inventory_hostname }}"
+    transport: nxapi
+    asn: 10
+    vrf: default
+    neighbor_id: 7.7.7.7
+    remote_as: 7
+
+- name: Create a rollback patch
+  nxos_command:
+    host: "{{ inventory_hostname }}"
+    use_ssl: true
+    transport: cli
+    validate_certs: false
+    commands:
+      - show diff rollback-patch running-config checkpoint {{ CR }} > bootflash:///{{ CR }}.patch
+
+- name: Save Running Configuraton
+  nxos_command:
+    host: "{{ inventory_hostname }}"
+    use_ssl: true
+    transport: cli
+    validate_certs: false
+    commands:
+      - copy running-config startup-config
+
+
