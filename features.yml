@@ -1,0 +1,17 @@
+- name: Simple playbook to enable NX-OS features 
+  hosts: all
+  connection: local
+  gather_facts: False
+
+  tasks:
+    - name: Enable Features
+      nxos_feature:
+        transport=nxapi
+        use_ssl=true
+        validate_certs=false
+        feature={{ item }}
+        state=enabled
+        host={{ inventory_hostname }}
+      with_items:
+        - interface-vlan
+        - bgp
